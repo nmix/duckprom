@@ -1,0 +1,128 @@
+version: '3'
+
+services:
+  proxy:
+    image: traefik:v2.9
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+      - "--providers.docker"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.api.address=:8080"
+      - "--entrypoints.prom.address=:9090"
+      - "--entrypoints.pgw.address=:9091"
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "9090:9090"
+      - "9091:9091"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.traefik.rule=Host(`localhost`)"
+      - "traefik.http.routers.traefik.entrypoints=api"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      # echo $(htpasswd -nb admin admin) | sed -e s/\\$/\\$\\$/g
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$Y5JhEo6T$$vgEnWCPsp1A3iXz9FWZGZ/"
+
+  grafana:
+    image: grafana/grafana:9.1.7
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    restart: unless-stopped
+    expose:
+      - 3000
+    env_file: [.env]
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.routers.grafana.rule=Host(`localhost`)"
+
+  prometheus:
+    image: prom/prometheus:v2.39.0
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=720h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    expose:
+      - 9090
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.prom.entrypoints=prom"
+      - "traefik.http.routers.prom.rule=Host(`localhost`)"
+      - "traefik.http.routers.prom.middlewares=auth"
+      # echo $(htpasswd -nb admin admin) | sed -e s/\\$/\\$\\$/g
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$Y5JhEo6T$$vgEnWCPsp1A3iXz9FWZGZ/"
+
+  pushgateway:
+    image: prom/pushgateway:v1.4.3
+    restart: unless-stopped
+    expose:
+      - 9091
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.pgw.entrypoints=pgw"
+      - "traefik.http.routers.pgw.rule=Host(`localhost`)"
+      - "traefik.http.routers.pgw.middlewares=auth"
+      # echo $(htpasswd -nb admin admin) | sed -e s/\\$/\\$\\$/g
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$Y5JhEo6T$$vgEnWCPsp1A3iXz9FWZGZ/"
+
+  nodeexporter:
+    image: prom/node-exporter:v1.3.1
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    expose:
+      - 9100
+    networks:
+      - monitor-net
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.45.0
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    restart: unless-stopped
+    expose:
+      - 8080
+    networks:
+      - monitor-net
+
+networks:
+  monitor-net:
+    driver: bridge
+
+volumes:
+  grafana_data: {}
+  prometheus_data: {}
+
