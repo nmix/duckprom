@@ -1,4 +1,5 @@
 .env
+/letsencrypt
 
 # Swap
 [._]*.s[a-v][a-z]
