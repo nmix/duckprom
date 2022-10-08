@@ -1,33 +1,34 @@
 version: '3'
 
 services:
-  proxy:                            
+  proxy:
     image: traefik:v2.9
-    command:               
-      - "--api.dashboard=true"                                                                 
-      - "--api.insecure=false"                                                                 
-      - "--providers.docker"                                                                   
-      - "--entrypoints.web.address=:80"        
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+      - "--providers.docker"
+      - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.api.address=:8080"
-      - "--entrypoints.prom.address=:9090"                                                     
+      - "--entrypoints.prom.address=:9090"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=acme@example.com"
+      - "--certificatesresolvers.myresolver.acme.email=foo@example.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-    ports:                                                                                     
-      - "80:80"                                                                                
-      - "443:443"                           
-      - "8080:8080"             
-      - "9090:9090"        
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+      - "9090:9090"
     volumes:
+      # - ./traefik.yaml:/etc/traefik/traefik.yaml
       - /var/run/docker.sock:/var/run/docker.sock
       - ./letsencrypt:/letsencrypt
     restart: unless-stopped
-    networks:                                                                                  
-      - monitor-net                                                                            
-    labels:                                                                                    
+    networks:
+      - monitor-net
+    labels:
       - "traefik.http.routers.traefik.rule=PathPrefix(`/`)"
       - "traefik.http.routers.traefik.entrypoints=api"
       - "traefik.http.routers.traefik.service=api@internal"
@@ -36,10 +37,10 @@ services:
       # echo $(htpasswd -nb admin admin) | sed -e s/\\$/\\$\\$/g
       - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$Y5JhEo6T$$vgEnWCPsp1A3iXz9FWZGZ/"
 
-  grafana:     
+  grafana:
     image: grafana/grafana:9.1.7
-    volumes:      
-      - grafana_data:/var/lib/grafana                                                          
+    volumes:
+      - grafana_data:/var/lib/grafana
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     restart: unless-stopped
@@ -49,7 +50,7 @@ services:
     networks:
       - monitor-net
     labels:
-      - "traefik.http.routers.grafana.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.example.com`)"
       - "traefik.http.routers.grafana.entrypoints=websecure"
       - "traefik.http.routers.grafana.tls.certresolver=myresolver"
 
@@ -74,8 +75,6 @@ services:
       - "traefik.http.routers.prom.entrypoints=prom"
       - "traefik.http.routers.prom.rule=PathPrefix(`/`)"
       - "traefik.http.routers.prom.middlewares=auth"
-      # echo $(htpasswd -nb admin admin) | sed -e s/\\$/\\$\\$/g
-      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$Y5JhEo6T$$vgEnWCPsp1A3iXz9FWZGZ/"
 
   nodeexporter:
     image: prom/node-exporter:v1.3.1

@@ -1,0 +1,66 @@
+# --- static
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+  api:
+    address: ":8080"
+  prom:
+    address: ":9090"
+
+certificatesResolvers:
+  myresolver:
+    acme:
+      tlsChallenge: true
+      email: mail@example.com
+      storage: /letsencrypt/acme.json
+
+# --- dynamic
+http:
+  routers:
+    traefik:
+      entryPoints:
+        - api
+      rule: "PathPrefix(`/`)"
+      service: api@internal
+      middlewares:
+        - auth
+    grafana:
+      entryPoints:
+        - websecure
+      rule: "Host(`example.com`)"
+      tls:
+        certResolver: myresolver
+    prom:
+      entryPoints:
+        - prom
+      role: "PathPrefix(`/`)"
+      middlewares:
+        - auth
+
+  # --- doesnt work ...
+  services:
+    api@internal:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8080"
+
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "admin:$apr1$Y5JhEo6T$vgEnWCPsp1A3iXz9FWZGZ/"
