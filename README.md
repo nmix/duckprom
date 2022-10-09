@@ -11,7 +11,6 @@ Key differences:
 * [traefik](https://doc.traefik.io/traefik/) instead of [caddy](https://caddyserver.com/)
 
 ## Install
-
 ```bash
 git clone https://github.com/nmix/duckprom.git
 cd duckprom
@@ -19,15 +18,22 @@ cd duckprom
 sudo apt-get install apache2-utils
 # --- create credentials string for user 'admin' and pass 'admin'
 #     see details on https://doc.traefik.io/traefik/middlewares/http/basicauth/#configuration-examples
-htpasswd -nb admin admin
-# output will be something like this
-# admin:$apr1$Y5JhEo6T$vgEnWCPsp1A3iXz9FWZGZ/
+export BASIC_AUTH_CREDS=$(htpasswd -nb admin admin)
+# --- create prometheus config
+cp prometheus/prometheus.yaml.example prometheus/prometheus.yaml
 
 # --- run project
 LETSENCRYPT_EMAIL=email-for-letsencrypt@example.com  \
   GRAFANA_HOST=grafana.example.com \
-  BASIC_AUTH_CREDS='admin:$apr1$Y5JhEo6T$vgEnWCPsp1A3iXz9FWZGZ/' \
+  BASIC_AUTH_CREDS=$BASIC_AUTH_CREDS \
   docker-compose up -d
 ```
 
 Go to https://grafana.example.com, default creds `admin`/`admin`. Change password after first login.
+
+## Install Edge
+```bash
+wget docker-compose.edge.yaml
+export BASIC_AUTH_CREDS=$(htpasswd -nb admin admin)
+BASIC_AUTH_CREDS=$BASIC_AUTH_CREDS docker-compose -f docker-compose.edge.yaml up -d
+```

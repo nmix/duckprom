@@ -1,0 +1,91 @@
+version: '3'
+
+services:
+  proxy:
+    image: traefik:v2.9
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+      - "--providers.docker"
+      - "--entrypoints.api.address=:8080"
+      - "--entrypoints.pushgateway.address=:9091"
+      - "--entrypoints.nodeexporter.address=:9100"
+      - "--entrypoints.cadvisor.address=:9200"
+    ports:
+      - "8080:8080"
+      - "9091:9091"
+      - "9100:9100"
+      - "9200:9200"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt:/letsencrypt
+    restart: unless-stopped
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.traefik.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.traefik.entrypoints=api"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${BASIC_AUTH_CREDS}"
+
+  nodeexporter:
+    image: prom/node-exporter:v1.3.1
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    expose:
+      - 9100
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.nodeexporter.entrypoints=nodeexporter"
+      - "traefik.http.routers.nodeexporter.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.nodeexporter.middlewares=auth"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.45.0
+    # container_name: cadvisor
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    restart: unless-stopped
+    expose:
+      - 8080
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.cadvisor.entrypoints=cadvisor"
+      - "traefik.http.routers.cadvisor.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.cadvisor.middlewares=auth"
+
+  pushgateway:
+    image: prom/pushgateway:v1.4.3
+    restart: unless-stopped
+    expose:
+      - 9091
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.pushgateway.entrypoints=pushgateway"
+      - "traefik.http.routers.pushgateway.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.pushgateway.middlewares=auth"
+
+networks:
+  monitor-net:
+    driver: bridge
+
+volumes:
+  grafana_data: {}
+  prometheus_data: {}
