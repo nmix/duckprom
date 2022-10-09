@@ -17,23 +17,40 @@ scrape_configs:
     scrape_interval: 5s
     static_configs:
       - targets: ['nodeexporter:9100']
+        labels:
+          host: duckprom
+    #   - targets: ['server1.example.com:9100']
+    #     labels:
+    #       host: server1
+    # basic_auth:
+    #   username: admin
+    #   password: admin
 
   - job_name: 'cadvisor'
     scrape_interval: 5s
     static_configs:
       - targets: ['cadvisor:8080']
+        labels:
+          host: duckprom
+   #    - targets: ['server1.example.com:9200']
+   #      labels:
+   #        host: server1
+   #  basic_auth:
+   #    username: admin
+   #    password: admin
 
   - job_name: 'prometheus'
     scrape_interval: 10s
     static_configs:
       - targets: ['localhost:9090']
+        labels:
+          host: duckprom
 
-  - job_name: 'pushgateway'
-    scrape_interval: 10s
-    honor_labels: true
-    static_configs:
-      - targets: ['pushgateway:9091']
-
+  # - job_name: 'pushgateway'
+  #   scrape_interval: 10s
+  #   honor_labels: true
+  #   static_configs:
+  #     - targets: ['pushgateway:9091']
 
 # alerting:
 #   alertmanagers:
