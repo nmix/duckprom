@@ -51,3 +51,20 @@ log_format upstream_time '$remote_addr - $remote_user [$time_local] '
 access_log /var/log/nginx/access.log upstream_time;
 ```
 Import [NGINX Log Metrics](https://grafana.com/grafana/dashboards/6482-nginx-log-metrics/) into duckprom grafana.
+
+## Logs with Loki
+
+Fix docker demon file /etc/docker/daemon.json
+```json
+{
+  "debug": false,
+  "log-opts": {
+    "tag": "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}",
+    "max-size": "100m"
+  }
+}
+```
+
+Add Loki datasource in grafana with url `http://myserver.example.com:9400` and basic auth from BASIC_AUTH_CREDS.
+
+Now navigate to *Explore* page and set Loki as datasource.
