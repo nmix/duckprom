@@ -12,12 +12,14 @@ services:
       - "--entrypoints.nodeexporter.address=:9100"
       - "--entrypoints.cadvisor.address=:9200"
       - "--entrypoints.nginxexporter.address=:9300"
+      - "--entrypoints.loki.address=:9400"
     ports:
       - "8080:8080"
       - "9091:9091"
       - "9100:9100"
       - "9200:9200"
       - "9300:9300"
+      - "9400:9400"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./letsencrypt:/letsencrypt
@@ -90,6 +92,7 @@ services:
       - "mnt/nginxlogs/access.log"
     volumes:
       - /var/log/nginx:/mnt/nginxlogs
+    restart: unless-stopped
     expose:
       - 4040
     networks:
@@ -99,11 +102,37 @@ services:
       - "traefik.http.routers.nginxexporter.rule=PathPrefix(`/`)"
       - "traefik.http.routers.nginxexporter.middlewares=auth"
 
+  loki:
+    image: grafana/loki:2.3.0
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki/config.yaml:/etc/loki/loki-config.yaml
+      - loki_data:/data/loki
+    restart: unless-stopped
+    expose:
+      - 3100
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.loki.entrypoints=loki"
+      - "traefik.http.routers.loki.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.loki.middlewares=auth"
+
+  promtail:
+    image: grafana/promtail:2.5.0
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail/config.yaml:/etc/promtail/promtail-config.yaml
+    expose:
+      - 9080
+    networks:
+      - monitor-net
 
 networks:
   monitor-net:
     driver: bridge
 
 volumes:
-  grafana_data: {}
-  prometheus_data: {}
+  loki_data: {}
