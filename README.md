@@ -10,7 +10,36 @@ Key differences:
 * alertmanager removed
 * [traefik](https://doc.traefik.io/traefik/) instead of [caddy](https://caddyserver.com/)
 
-## Install
+
+
+## About
+
+Duckprom is solution for observation a small number of  servers with dockerized apps.
+
+Stack:
+
+* prometheus - https://prometheus.io/
+* grafana - https://grafana.com/
+* node exporter - https://github.com/prometheus/node_exporter
+* cadvisor - https://github.com/google/cadvisor
+* nginxexporter https://github.com/martin-helmich/prometheus-nginxlog-exporter
+* pushgateway - https://github.com/prometheus/pushgateway
+* loki - https://grafana.com/oss/loki/
+* promtail - https://grafana.com/docs/loki/latest/clients/promtail/
+* traefik - https://doc.traefik.io/traefik/
+
+Duckprom consists of the *main* end *edge* sets of services.
+
+![duckprom struct](https://clck.ru/32KQxj)
+
+ All metrics scraped by *prometheus* on main set.
+
+Logs collected with *promtail* and *loki* on each *edge* server. You have to add all *edge Loki* to grafana as separate Datasource.
+
+
+
+## Install Main
+
 ```bash
 git clone https://github.com/nmix/duckprom.git
 cd duckprom
@@ -33,12 +62,12 @@ Go to https://grafana.example.com, default creds `admin`/`admin`. Change passwor
 
 ## Install Edge
 ```bash
-wget docker-compose.edge.yaml
+git clone https://github.com/nmix/duckprom.git
 export BASIC_AUTH_CREDS=$(htpasswd -nb admin admin)
 BASIC_AUTH_CREDS=$BASIC_AUTH_CREDS docker-compose -f docker-compose.edge.yaml up -d
 ```
 
-## Nginx Exporter
+### Nginx Exporter
 
 Duckprom can scrape metrics from nginx logs with https://github.com/martin-helmich/prometheus-nginxlog-exporter.
 
@@ -52,7 +81,7 @@ access_log /var/log/nginx/access.log upstream_time;
 ```
 Import [NGINX Log Metrics](https://grafana.com/grafana/dashboards/6482-nginx-log-metrics/) into duckprom grafana.
 
-## Logs with Loki
+### Logs with Loki
 
 Fix docker demon file /etc/docker/daemon.json
 ```json
