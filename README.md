@@ -48,6 +48,8 @@ sudo apt-get install apache2-utils
 # --- create credentials string for user 'admin' and pass 'admin'
 #     see details on https://doc.traefik.io/traefik/middlewares/http/basicauth/#configuration-examples
 export BASIC_AUTH_CREDS=$(htpasswd -nb admin admin)
+# --- create grafana config
+cp .env.example .env
 # --- create prometheus config
 cp prometheus/prometheus.yaml.example prometheus/prometheus.yaml
 
