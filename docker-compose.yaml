@@ -13,6 +13,7 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.api.address=:8080"
       - "--entrypoints.prom.address=:9090"
+      - "--entrypoints.pushgateway.address=:9091"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
       - "--certificatesresolvers.myresolver.acme.email=${LETSENCRYPT_EMAIL}"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
@@ -21,6 +22,7 @@ services:
       - "443:443"
       - "8080:8080"
       - "9090:9090"
+      - "9091:9091"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./letsencrypt:/letsencrypt
@@ -73,6 +75,18 @@ services:
       - "traefik.http.routers.prom.entrypoints=prom"
       - "traefik.http.routers.prom.rule=PathPrefix(`/`)"
       - "traefik.http.routers.prom.middlewares=auth"
+
+  pushgateway:
+    image: prom/pushgateway:v1.4.3
+    restart: unless-stopped
+    expose:
+      - 9091
+    networks:
+      - monitor-net
+    labels:
+      - "traefik.http.routers.pushgateway.entrypoints=pushgateway"
+      - "traefik.http.routers.pushgateway.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.pushgateway.middlewares=auth"
 
   nodeexporter:
     image: prom/node-exporter:v1.3.1

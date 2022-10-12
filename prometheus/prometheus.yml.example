@@ -46,11 +46,13 @@ scrape_configs:
         labels:
           host: duckprom
 
-  # - job_name: 'pushgateway'
-  #   scrape_interval: 10s
-  #   honor_labels: true
-  #   static_configs:
-  #     - targets: ['pushgateway:9091']
+  - job_name: 'pushgateway'
+    scrape_interval: 10s
+    honor_labels: true
+    static_configs:
+      - targets: ['pushgateway:9091']
+        labels:
+          host: duckprom
 
   # - job_name: 'nginxexporter'
   #   scrape_interval: 10s

@@ -8,14 +8,12 @@ services:
       - "--api.insecure=false"
       - "--providers.docker"
       - "--entrypoints.api.address=:8080"
-      - "--entrypoints.pushgateway.address=:9091"
       - "--entrypoints.nodeexporter.address=:9100"
       - "--entrypoints.cadvisor.address=:9200"
       - "--entrypoints.nginxexporter.address=:9300"
       - "--entrypoints.loki.address=:9400"
     ports:
       - "8080:8080"
-      - "9091:9091"
       - "9100:9100"
       - "9200:9200"
       - "9300:9300"
@@ -73,35 +71,6 @@ services:
       - "traefik.http.routers.cadvisor.rule=PathPrefix(`/`)"
       - "traefik.http.routers.cadvisor.middlewares=auth"
 
-  pushgateway:
-    image: prom/pushgateway:v1.4.3
-    restart: unless-stopped
-    expose:
-      - 9091
-    networks:
-      - monitor-net
-    labels:
-      - "traefik.http.routers.pushgateway.entrypoints=pushgateway"
-      - "traefik.http.routers.pushgateway.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.pushgateway.middlewares=auth"
-
-  nginxexporter:
-    image: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2
-    command:
-      - "-format=$$remote_addr - $$remote_user [$$time_local] \"$$request\" $$status $$body_bytes_sent \"$$http_referer\" \"$$http_user_agent\" rt=$$request_time uct=\"$$upstream_connect_time\" uht=\"$$upstream_header_time\" urt=\"$$upstream_response_time\""
-      - "mnt/nginxlogs/access.log"
-    volumes:
-      - /var/log/nginx:/mnt/nginxlogs
-    restart: unless-stopped
-    expose:
-      - 4040
-    networks:
-      - monitor-net
-    labels:
-      - "traefik.http.routers.nginxexporter.entrypoints=nginxexporter"
-      - "traefik.http.routers.nginxexporter.rule=PathPrefix(`/`)"
-      - "traefik.http.routers.nginxexporter.middlewares=auth"
-
   loki:
     image: grafana/loki:2.3.0
     command: -config.file=/etc/loki/loki-config.yaml
@@ -129,6 +98,23 @@ services:
       - 9080
     networks:
       - monitor-net
+
+  # nginxexporter:
+  #   image: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1.9.2
+  #   command:
+  #     - "-format=$$remote_addr - $$remote_user [$$time_local] \"$$request\" $$status $$body_bytes_sent \"$$http_referer\" \"$$http_user_agent\" rt=$$request_time uct=\"$$upstream_connect_time\" uht=\"$$upstream_header_time\" urt=\"$$upstream_response_time\""
+  #     - "mnt/nginxlogs/access.log"
+  #   volumes:
+  #     - /var/log/nginx:/mnt/nginxlogs
+  #   restart: unless-stopped
+  #   expose:
+  #     - 4040
+  #   networks:
+  #     - monitor-net
+  #   labels:
+  #     - "traefik.http.routers.nginxexporter.entrypoints=nginxexporter"
+  #     - "traefik.http.routers.nginxexporter.rule=PathPrefix(`/`)"
+  #     - "traefik.http.routers.nginxexporter.middlewares=auth"
 
 networks:
   monitor-net:
