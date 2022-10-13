@@ -939,10 +939,12 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{image!=\"\",container_label_org_label_schema_group=\"\"}[1m])) / scalar(count(node_cpu_seconds_total{mode=\"user\"})) * 100",
+          "editorMode": "code",
+          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{image!=\"\",container_label_org_label_schema_group=\"\", host=\"$host\"}[1m])) / scalar(count(node_cpu_seconds_total{mode=\"user\", host=\"$host\"})) * 100",
           "intervalFactor": 10,
           "legendFormat": "{{ name }}",
           "metric": "container_cpu_user_seconds_total",
+          "range": true,
           "refId": "A",
           "step": 10
         }
@@ -1386,7 +1388,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "duckprom",
           "value": "duckprom"
         },
@@ -1445,6 +1447,6 @@
   "timezone": "browser",
   "title": "Containers",
   "uid": "tjMKtqV4k",
-  "version": 7,
+  "version": 9,
   "weekStart": ""
 }
