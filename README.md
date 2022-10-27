@@ -85,7 +85,7 @@ Import [NGINX Log Metrics](https://grafana.com/grafana/dashboards/6482-nginx-log
 
 ### Logs with Loki
 
-Fix docker demon file /etc/docker/daemon.json
+Fix docker daemon file /etc/docker/daemon.json
 ```json
 {
   "debug": false,
@@ -94,6 +94,11 @@ Fix docker demon file /etc/docker/daemon.json
     "max-size": "100m"
   }
 }
+```
+Restart daemon
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart docker.service
 ```
 
 Add Loki datasource in grafana with url `http://myserver.example.com:9400` and basic auth from BASIC_AUTH_CREDS.
