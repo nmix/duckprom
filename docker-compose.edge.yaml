@@ -7,6 +7,7 @@ services:
       - "--api.dashboard=true"
       - "--api.insecure=false"
       - "--providers.docker"
+      - "--providers.docker.constraints=Label(`com.github.project`,`duckprom`)"
       - "--entrypoints.api.address=:8080"
       - "--entrypoints.nodeexporter.address=:9100"
       - "--entrypoints.cadvisor.address=:9200"
@@ -25,6 +26,7 @@ services:
     networks:
       - monitor-net
     labels:
+      - "com.github.project=duckprom"
       - "traefik.http.routers.traefik.rule=PathPrefix(`/`)"
       - "traefik.http.routers.traefik.entrypoints=api"
       - "traefik.http.routers.traefik.service=api@internal"
@@ -49,6 +51,7 @@ services:
     networks:
       - monitor-net
     labels:
+      - "com.github.project=duckprom"
       - "traefik.http.routers.nodeexporter.entrypoints=nodeexporter"
       - "traefik.http.routers.nodeexporter.rule=PathPrefix(`/`)"
       - "traefik.http.routers.nodeexporter.middlewares=auth"
@@ -67,6 +70,7 @@ services:
     networks:
       - monitor-net
     labels:
+      - "com.github.project=duckprom"
       - "traefik.http.routers.cadvisor.entrypoints=cadvisor"
       - "traefik.http.routers.cadvisor.rule=PathPrefix(`/`)"
       - "traefik.http.routers.cadvisor.middlewares=auth"
@@ -83,6 +87,7 @@ services:
     networks:
       - monitor-net
     labels:
+      - "com.github.project=duckprom"
       - "traefik.http.routers.loki.entrypoints=loki"
       - "traefik.http.routers.loki.rule=PathPrefix(`/`)"
       - "traefik.http.routers.loki.middlewares=auth"
@@ -113,6 +118,7 @@ services:
   #   networks:
   #     - monitor-net
   #   labels:
+  #     - "com.github.project=duckprom"
   #     - "traefik.http.routers.nginxexporter.entrypoints=nginxexporter"
   #     - "traefik.http.routers.nginxexporter.rule=PathPrefix(`/`)"
   #     - "traefik.http.routers.nginxexporter.middlewares=auth"
