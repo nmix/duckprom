@@ -1,5 +1,10 @@
 # Duckprom
 
+
+**!!! The project has moved to https://github.com/nmix/ansible-role-duckprom !!!**
+
+<hr>
+
 Almost the same as [dockprom](https://github.com/stefanprodan/dockprom).
 
 Key differences:
